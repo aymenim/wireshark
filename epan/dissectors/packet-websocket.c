@@ -40,11 +40,13 @@ static dissector_handle_t websocket_handle;
 static dissector_handle_t text_lines_handle;
 static dissector_handle_t json_handle;
 static dissector_handle_t sip_handle;
+static dissector_handle_t protobuf_handle;
 
 #define WEBSOCKET_NONE 0
 #define WEBSOCKET_TEXT 1
 #define WEBSOCKET_JSON 2
 #define WEBSOCKET_SIP 3
+#define WEBSOCKET_PROTOBUF 4
 
 static gint  pref_text_type             = WEBSOCKET_NONE;
 static gboolean pref_decompress         = TRUE;
@@ -403,6 +405,9 @@ dissect_websocket_data_frame(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree
         break;
       case WEBSOCKET_SIP:
         call_dissector(sip_handle, tvb, pinfo, tree);
+        break;
+      case WEBSOCKET_PROTOBUF:
+        call_dissector(protobuf_handle, tvb, pinfo, tree);
         break;
       }
       pinfo->match_string = saved_match_string;
@@ -766,7 +771,8 @@ proto_register_websocket(void)
       {"None",            "No subdissection", WEBSOCKET_NONE},
       {"Line based text", "Line based text",  WEBSOCKET_TEXT},
       {"As JSON",         "As json",          WEBSOCKET_JSON},
-      {"As SIP",         "As SIP",          WEBSOCKET_SIP},
+      {"As SIP",         "As SIP",            WEBSOCKET_SIP},
+      {"As PROTOBUF",         "As PROTOBUF",  WEBSOCKET_PROTOBUF},
       {NULL, NULL, -1}
   };
 
@@ -814,7 +820,8 @@ proto_reg_handoff_websocket(void)
   text_lines_handle = find_dissector_add_dependency("data-text-lines", proto_websocket);
   json_handle = find_dissector_add_dependency("json", proto_websocket);
   sip_handle = find_dissector_add_dependency("sip", proto_websocket);
-
+  protobuf_handle = find_dissector_add_dependency("protobuf", proto_websocket);
+  
   proto_http = proto_get_id_by_filter_name("http");
 }
 /*
