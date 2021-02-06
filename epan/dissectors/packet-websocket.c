@@ -415,7 +415,26 @@ dissect_websocket_data_frame(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree
     break;
 
     case WS_BINARY: /* Binary */
-      call_data_dissector(tvb, pinfo, tree);
+    {
+      const gchar  *saved_match_string = pinfo->match_string;
+
+      pinfo->match_string = NULL;
+      switch (pref_text_type) {
+      case WEBSOCKET_TEXT:
+      case WEBSOCKET_NONE:
+      default:
+        call_data_dissector(tvb, pinfo, tree);
+        break;
+      case WEBSOCKET_SIP:
+        call_dissector(sip_handle, tvb, pinfo, tree);
+        break;
+      case WEBSOCKET_PROTOBUF:
+        call_dissector(protobuf_handle, tvb, pinfo, tree);
+        break;
+      }
+      pinfo->match_string = saved_match_string;
+    }
+      
       break;
 
     default: /* Unknown */
